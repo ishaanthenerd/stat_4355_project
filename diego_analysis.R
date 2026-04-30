@@ -1,4 +1,3 @@
-setwd("C:\\Users\\dxe230000\\Downloads")
 
 t <- read.csv("cardio_train_standard.csv")
 
