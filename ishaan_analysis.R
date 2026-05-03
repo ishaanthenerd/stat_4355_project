@@ -126,7 +126,7 @@ df$cardio_dv <- ifelse(df$cardio == "1", 1, 0)
 # 90 ~ 120 mmHg for systolic, 60 ~ 80 mmHg for diastolic (source: AHA)
 
 # Building an initial model
-model_v1 <- lm(ap_hi ~ age + gender_dv + height_imperial + weight_imperial + cholesterol_2_dv + cholesterol_3_dv + gluc_2_dv + gluc_3_dv + smoke_dv + alco_dv + active_dv, data = df)
+model_v1 <- lm(ap_hi ~ age + height_imperial + weight_imperial + gender_dv + cholesterol_2_dv + cholesterol_3_dv + gluc_2_dv + gluc_3_dv + smoke_dv + alco_dv + active_dv, data = df)
 
 # Checking for high VIFs
 vif_v1 <- vif(model_v1)
@@ -150,18 +150,8 @@ summary_model_v1 <- summary(model_v1)
 # Observations:
 # 1. All but two variables, when considered as stand-alone, are significant in the model. Only the smoke_dv and active_dv are not significant.
 # 2. The adjusted R^2 value is 0.1332, indicating that the model (as it stands) is not very good.
-# One idea to fix the prior point is to add clustering of data based on some subset of factors, then compute regression lines for each. 
+# EDIT: That's because model v1 is wrong! There should be 576 terms in all, not 11.
 
-# Handle clustering for variables with two values
-for (col_name in c("gender", "smoke", "alco", "active", "cardio")) {
-    print(col_name) # TODO: add logic
-    # NOTE: you must use df[, col_name] instead of $.
-}
-
-# Handle clustering for variables with three values
-for (col_name in c("cholesterol", "gluc")) {
-    print(col_name) # TODO: add logic
-    # NOTE: you must use df[, col_name] instead of $.
-}
+# Model v2 will add cross terms that come about because of categorical variables
 
 # GOAL 2: Identifying how to reduce risk of cardiovascular disease
