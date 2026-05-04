@@ -2,16 +2,18 @@
 # install.packages("car", type = "binary")
 # install.packages("ggplot2", type = "binary")
 # install.packages("DHARMa", type = "binary")
+# install.packages("MASS", type = "binary")
 library(car)
 library(ggplot2)
-library("DHARMa")
+library(DHARMa)
+library(MASS)
 source("ishaan_functions.R")
 
 # --- Loading data ---
 df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\filtered_cardio.csv", sep = ";") 
 
-# GOAL 1: Identifying how to keep healthy systolic / diastolic blood pressure
-# 90 ~ 120 mmHg for systolic, 60 ~ 80 mmHg for diastolic (source: AHA)
+# GOAL 1: Identifying how to keep healthy systolic blood pressure
+# 90 ~ 120 mmHg for systolic (source: AHA)
 
 # Build an initial model
 model_v1 <- lm(ap_hi ~ age_years + height_imperial + weight_imperial + gender_dv + cholesterol_2_dv + cholesterol_3_dv + gluc_2_dv + gluc_3_dv + smoke_dv + alco_dv + active_dv, data = df)
@@ -57,8 +59,31 @@ summary_model_v3 <- summary(model_v3)
 
 # Residual analysis
 sim_res_model_v3 <- simulateResiduals(model_v3)
-plot(sim_res_model_v3)
+plotQQunif(sim_res_model_v3)
+plotResiduals(sim_res_model_v3)
 
-# GOAL 2: Identifying how to reduce risk of cardiovascular disease
+# Tests from QQunif:
+# KS test shows significance, i.e. the data can be said to be drawn from another distribution beyond a reasonable doubt --> interpreting QQ plot reveals that the data is heavy on both tails, so this is expected
+# Dispersion test does not show significance, i.e. there is not enough evidence to say that the data is either over or under-dispersed
+# Outlier test shows significance, i.e. the data can be said to have outliers beyond a reasonable doubt --> plenty of outliers exist at the top and bottom of the residual plot
 
-# Build an initial model (logistic regression)
+# Use Box-Cox to find an appropriate k to transform the response with y --> (y^k - 1) / k
+boxcox(model_v3, plotit = TRUE)
+
+# Model v4 will use k = -2/3 from Box-Cox on top of v3
+k <- -2/3
+model_v4 <- glm(formula = (ap_hi^k - 1) / k ~ (1 + age_years + height_imperial + weight_imperial) * 
+                                (1 + gender_dv) *
+                                (1 + smoke_dv) * 
+                                (1 + alco_dv) * 
+                                (1 + active_dv) * 
+                                (1 + cholesterol_2_dv + cholesterol_3_dv) * 
+                                (1 + gluc_2_dv + gluc_3_dv), data = df)
+
+# Determine how well the model does
+summary_model_v4 <- summary(model_v4)
+
+# Residual analysis
+sim_res_model_v4 <- simulateResiduals(model_v4)
+plotQQunif(sim_res_model_v4)
+plotResiduals(sim_res_model_v4)
