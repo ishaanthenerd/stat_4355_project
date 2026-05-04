@@ -46,15 +46,15 @@ df$cardio <- as.factor(df$cardio)
 
 # Create dummy variables for categories that are non-numerical
 # Variables: gender, cholesterol, gluc, smoke, alco, active, cardio
-df$gender_dv <- ifelse(df$gender == "2", 1, 0)
-df$cholesterol_2_dv <- ifelse(df$cholesterol == "2", 1, 0)
-df$cholesterol_3_dv <- ifelse(df$cholesterol == "3", 1, 0)
-df$gluc_2_dv <- ifelse(df$gluc == "2", 1, 0)
-df$gluc_3_dv <- ifelse(df$gluc == "3", 1, 0)
-df$smoke_dv <- ifelse(df$smoke == "1", 1, 0)
-df$alco_dv <- ifelse(df$alco == "1", 1, 0)
-df$active_dv <- ifelse(df$active == "1", 1, 0)
-df$cardio_dv <- ifelse(df$cardio == "1", 1, 0)
+df$gender_dv <- as.numeric(df$gender == 2)
+df$cholesterol_2_dv <- as.numeric(df$cholesterol == 2)
+df$cholesterol_3_dv <- as.numeric(df$cholesterol == 3)
+df$gluc_2_dv <- as.numeric(df$gluc == 2)
+df$gluc_3_dv <- as.numeric(df$gluc == 3)
+df$smoke_dv <- as.numeric(df$smoke == 1)
+df$alco_dv <- as.numeric(df$alco == 1)
+df$active_dv <- as.numeric(df$active == 1)
+df$cardio_dv <- as.numeric(df$cardio == 1)
 
 # Save data
 write.csv2(df, file = "filtered_cardio.csv", row.names = FALSE)
