@@ -1,132 +1,20 @@
-# --- Installing and importing libraries ---
+# --- Importing libraries and functions ---
 # install.packages("car", type = "binary")
 # install.packages("ggplot2", type = "binary")
+# install.packages("DHARMa", type = "binary")
 library(car)
 library(ggplot2)
-
-# --- Add functions for plotting ---
-
-# Plot two continuous variables
-plot_two_continuous <- function(data, x_var, y_var, point_color = "blue", point_size = 2, file_path = "") {
-    if (!is.data.frame(data)) {
-        stop("Error: 'data' must be a data frame.")
-    }
-    if (!all(c(x_var, y_var) %in% names(data))) {
-        stop("Error: Both variables must exist in the data frame.")
-    }
-    if (!is.numeric(data[[x_var]]) || !is.numeric(data[[y_var]])) {
-        stop("Error: Both variables must be numeric (continuous).")
-    }
-    
-    p <- ggplot(data, aes_string(x = x_var, y = y_var)) +
-        geom_point(color = point_color, size = point_size, alpha = 0.7) +
-        geom_smooth(method = "lm", se = TRUE, color = "red", linetype = "dashed") +
-        labs(
-            title = paste("Scatter Plot of", x_var, "vs", y_var),
-            x = x_var,
-            y = y_var
-        ) +
-        theme_minimal()
-    print(p)
-
-    if (file_path != "") {
-        ggsave(file_path)
-    }
-}
-
-# Plot two discrete variables
-plot_discrete_continuous <- function(data, x_var, y_var, fill_color = "lightblue", file_path = "") {
-    if (!is.data.frame(data)) {
-        stop("Error: 'data' must be a data frame.")
-    }
-    if (!all(c(x_var, y_var) %in% names(data))) {
-        stop("Error: Both variables must exist in the data frame.")
-    }
-    if (!is.factor(data[[x_var]]) && !is.character(data[[x_var]])) {
-        stop("Error: 'x_var' must be categorical (factor or character).")
-    }
-    if (!is.numeric(data[[y_var]])) {
-        stop("Error: 'y_var' must be numeric (continuous).")
-    }
-    
-    p <- ggplot(data, aes_string(x = x_var, y = y_var)) +
-        geom_boxplot(fill = fill_color, alpha = 0.7) +
-        labs(
-            title = paste("Boxplot of", y_var, "by", x_var),
-            x = x_var,
-            y = y_var
-        ) +
-        theme_minimal()
-    print(p)
-
-    if (file_path != "") {
-        ggsave(file_path)
-    }
-}
+library("DHARMa")
+source("ishaan_functions.R")
 
 # --- Loading data ---
-df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\cardio_train.csv", sep = ";") 
-
-# --- Filtering data ---
-
-# Remove NAs and blanks
-df <- df[rowSums(is.na(df) | df == "") != ncol(df), ]
-
-# Remove absurd values for diastolic / systolic blood pressure
-df <- df[df$ap_lo >= 6, ]
-df <- df[df$ap_lo <= 360, ]
-df <- df[df$ap_hi >= 30, ]
-df <- df[df$ap_hi <= 370, ]
-
-# Remove people with absurd BMI
-df$bmi <- df$weight / (df$height / 100)^2
-df <- df[df$bmi >= 10, ]
-df <- df[df$bmi <= 50, ]
-
-# Remove people with absurd height
-df <- df[df$height >= 120, ]
-df <- df[df$height <= 210, ]
-
-# All weights remaining after the above steps are in a reasonable range; no need to filter
-# All ages are in a reasonable range; no need to filter
-
-# --- Manipulating data ---
-
-# Convert age (days -> years)
-df$age_years <- df$age / 365
-
-# Convert height to imperial units (cm -> in)
-df$height_imperial <- df$height / 2.54
-
-# Convert weight to imperial units (kg -> lb)
-df$weight_imperial <- df$weight * 2.20462262
-
-# Turn non-numerical variables into factors
-df$gender <- as.factor(df$gender)
-df$cholesterol <- as.factor(df$cholesterol)
-df$gluc <- as.factor(df$gluc)
-df$smoke <- as.factor(df$smoke)
-df$alco <- as.factor(df$alco)
-df$active <- as.factor(df$active)
-df$cardio <- as.factor(df$cardio)
-
-# Create dummy variables for categories that are non-numerical
-# Variables: gender, cholesterol, gluc, smoke, alco, active, cardio
-df$gender_dv <- ifelse(df$gender == "2", 1, 0)
-df$cholesterol_2_dv <- ifelse(df$cholesterol == "2", 1, 0)
-df$cholesterol_3_dv <- ifelse(df$cholesterol == "3", 1, 0)
-df$gluc_2_dv <- ifelse(df$gluc == "2", 1, 0)
-df$gluc_3_dv <- ifelse(df$gluc == "3", 1, 0)
-df$smoke_dv <- ifelse(df$smoke == "1", 1, 0)
-df$alco_dv <- ifelse(df$alco == "1", 1, 0)
-df$active_dv <- ifelse(df$active == "1", 1, 0)
-df$cardio_dv <- ifelse(df$cardio == "1", 1, 0)
+df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\filtered_cardio.csv", sep = ";") 
 
 # GOAL 1: Identifying how to keep healthy systolic / diastolic blood pressure
 # 90 ~ 120 mmHg for systolic, 60 ~ 80 mmHg for diastolic (source: AHA)
 
 # Build an initial model
-model_v1 <- lm(ap_hi ~ age + height_imperial + weight_imperial + gender_dv + cholesterol_2_dv + cholesterol_3_dv + gluc_2_dv + gluc_3_dv + smoke_dv + alco_dv + active_dv, data = df)
+model_v1 <- lm(ap_hi ~ age_years + height_imperial + weight_imperial + gender_dv + cholesterol_2_dv + cholesterol_3_dv + gluc_2_dv + gluc_3_dv + smoke_dv + alco_dv + active_dv, data = df)
 
 # Determine how well the model does
 summary_model_v1 <- summary(model_v1)
@@ -149,8 +37,28 @@ model_v2 <- lm(formula = ap_hi ~ (1 + age_years + height_imperial + weight_imper
 summary_model_v2 <- summary(model_v2)
 
 # Observations:
-# The adjusted R^2 is still very low. Alternative idea - use logistic regression.
+# The adjusted R^2 is still very low. Alternative idea - use a generalized linear model.
 
-# TODO: Model v3 will use logistic regression
+# Model v3 will use a generalized version
+model_v3 <- glm(formula = ap_hi ~ (1 + age_years + height_imperial + weight_imperial) * 
+                                (1 + gender_dv) *
+                                (1 + smoke_dv) * 
+                                (1 + alco_dv) * 
+                                (1 + active_dv) * 
+                                (1 + cholesterol_2_dv + cholesterol_3_dv) * 
+                                (1 + gluc_2_dv + gluc_3_dv), data = df)
+
+# Determine how well the model does
+summary_model_v3 <- summary(model_v3)
+
+# Observations:
+# The adjusted R^2 is still very low, but without deviating from a linear model, this is about as good as we'll get.
+# Let's analyze residuals for any transformation that needs to be done on ap_hi.
+
+# Residual analysis
+sim_res_model_v3 <- simulateResiduals(model_v3)
+plot(sim_res_model_v3)
 
 # GOAL 2: Identifying how to reduce risk of cardiovascular disease
+
+# Build an initial model (logistic regression)
