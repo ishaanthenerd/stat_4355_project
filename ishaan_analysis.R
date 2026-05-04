@@ -125,24 +125,8 @@ df$cardio_dv <- ifelse(df$cardio == "1", 1, 0)
 # GOAL 1: Identifying how to keep healthy systolic / diastolic blood pressure
 # 90 ~ 120 mmHg for systolic, 60 ~ 80 mmHg for diastolic (source: AHA)
 
-# Building an initial model
+# Build an initial model
 model_v1 <- lm(ap_hi ~ age + height_imperial + weight_imperial + gender_dv + cholesterol_2_dv + cholesterol_3_dv + gluc_2_dv + gluc_3_dv + smoke_dv + alco_dv + active_dv, data = df)
-
-# Checking for high VIFs
-vif_v1 <- vif(model_v1)
-vif_v1_df <- data.frame(Variable = names(vif_v1), VIF = vif_v1)
-high_vif_threshold <- 5
-ggplot(vif_v1_df, aes(x = Variable, y = VIF)) +
-    geom_bar(stat = "identity", fill = "steelblue") +
-    scale_y_continuous(limits = c(0, max(vif_v1_df$VIF))) +
-    labs(title = "Variance Inflation Factor (VIF) for Regression Model",
-        y = "VIF",
-        x = "Variable") +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-ggsave("vif_v1.png")
-
-# All VIFs are under 2, so no need to remove variables
 
 # Determine how well the model does
 summary_model_v1 <- summary(model_v1)
@@ -150,8 +134,23 @@ summary_model_v1 <- summary(model_v1)
 # Observations:
 # 1. All but two variables, when considered as stand-alone, are significant in the model. Only the smoke_dv and active_dv are not significant.
 # 2. The adjusted R^2 value is 0.1332, indicating that the model (as it stands) is not very good.
-# EDIT: That's because model v1 is wrong! There should be 576 terms in all, not 11.
+# EDIT: That's because model v1 is wrong! There should be 576 terms in all, not 12.
 
 # Model v2 will add cross terms that come about because of categorical variables
+model_v2 <- lm(formula = ap_hi ~ (1 + age_years + height_imperial + weight_imperial) * 
+                                (1 + gender_dv) *
+                                (1 + smoke_dv) * 
+                                (1 + alco_dv) * 
+                                (1 + active_dv) * 
+                                (1 + cholesterol_2_dv + cholesterol_3_dv) * 
+                                (1 + gluc_2_dv + gluc_3_dv), data = df)
+
+# Determine how well the model does
+summary_model_v2 <- summary(model_v2)
+
+# Observations:
+# The adjusted R^2 is still very low. Alternative idea - use logistic regression.
+
+# TODO: Model v3 will use logistic regression
 
 # GOAL 2: Identifying how to reduce risk of cardiovascular disease
