@@ -352,3 +352,13 @@ summary(cardiomodel8)
 AIC(cardiomodel2, cardiomodel8)
 anova(cardiomodel2, cardiomodel8, test = "Chisq")
 
+# Residual analysis - red line indicates quantile deviation
+sim_res_model_cm8 <- simulateResiduals(cardiomodel8)
+testoutliers_cm8 <- testOutliers(simulationOutput = sim_res_model_cm8, type = "bootstrap")
+
+
+plotQQunif(sim_res_model_cm8)
+
+plotResiduals(sim_res_model_cm8, smoothScatter = FALSE)
+
+
