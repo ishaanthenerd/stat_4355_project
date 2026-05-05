@@ -27,13 +27,16 @@ df <- df[df$height <= 210, ]
 # --- Manipulating data ---
 
 # Convert age (days -> years)
-df$age_years <- as.numeric(df$age / 365)
+df$age_years <- df$age / 365
+df$age_years <- as.numeric(gsub(",", ".", df$age_years))
 
 # Convert height to imperial units (cm -> in)
-df$height_imperial <- as.numeric(df$height / 2.54)
+df$height_imperial <- df$height / 2.54
+df$height_imperial <- as.numeric(gsub(",", ".", df$height_imperial))
 
 # Convert weight to imperial units (kg -> lb)
-df$weight_imperial <- as.numeric(df$weight * 2.20462262)
+df$weight_imperial <- df$weight * 2.20462262
+df$weight_imperial <- as.numeric(gsub(",", ".", df$weight_imperial))
 
 # Turn non-numerical variables into factors
 df$gender <- as.factor(df$gender)
