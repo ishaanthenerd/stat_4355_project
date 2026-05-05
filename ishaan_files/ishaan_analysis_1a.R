@@ -91,5 +91,57 @@ sim_res_model_v4 <- simulateResiduals(model_v4)
 plotQQunif(sim_res_model_v4)
 plotResiduals(sim_res_model_v4, smoothScatter = FALSE)
 
-# Model v5 will use forward model selection from v4
+# Model v5 will use forward model selection directly from v4
+# EDIT: This does not run in a reasonable amount of time. We'll need to manually add the relevant terms.
 ols_step_forward_p(model_v4)
+
+# Model v6 will use forward selection from the base model
+current_model <- glm(ap_hi_modified ~ age_years + height_imperial + weight_imperial, data = df)
+
+candidates <- c(
+  "gender_dv",
+  "smoke_dv",
+  "alco_dv",
+  "active_dv",
+  "cholesterol_2_dv",
+  "cholesterol_3_dv",
+  "gluc_2_dv",
+  "gluc_3_dv"
+)
+
+remaining <- candidates
+selected <- c()
+alpha <- 0.05
+
+repeat {
+  if (length(remaining) == 0) break
+  
+  pvals <- c()
+  models <- list()
+  
+  for (term in remaining) {
+    
+    # This line is the key: it adds (1 + term) in your original sense
+    model_try <- update(current_model, as.formula(paste("~ . *", term)))
+    
+    a <- anova(current_model, model_try, test = "F")
+    
+    pvals[term] <- a$`Pr(>F)`[2]
+    models[[term]] <- model_try
+  }
+  
+  best_term <- names(which.min(pvals))
+  best_p <- min(pvals, na.rm = TRUE)
+  
+  if (!is.na(best_p) && best_p < alpha) {
+    current_model <- models[[best_term]]
+    selected <- c(selected, best_term)
+    remaining <- setdiff(remaining, best_term)
+    
+    cat("Added block:", best_term, "| p =", best_p, "\n")
+  } else {
+    break
+  }
+}
+
+summary(current_model)
