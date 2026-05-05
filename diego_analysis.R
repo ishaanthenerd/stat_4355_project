@@ -325,7 +325,7 @@ cardiolasso_cv <- cv.glmnet(
 plot(cardiolasso_cv)
 
 # Coefficients at the more conservative lambda
-coef_1se <- coef(cvfit, s = "lambda.1se")
+coef_1se <- coef(cardiolasso_cv, s = "lambda.1se")
 selected_terms <- rownames(coef_1se)[as.vector(coef_1se !=0)]
 selected_terms <- setdiff(selected_terms, "(Intercept)")
 selected_terms
