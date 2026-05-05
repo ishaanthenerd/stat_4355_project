@@ -178,3 +178,6 @@ ggplot(df, aes(x = pred_ap_hi, y = resid_ap_hi)) +
     x = "Predicted Systolic BP",
     y = "Residuals"
   )
+
+#   A lot of the data is on the horizontal lines because systolic bp is discrete and many patients
+#   have exactly the same values.
