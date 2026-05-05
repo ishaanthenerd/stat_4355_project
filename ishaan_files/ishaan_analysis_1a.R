@@ -3,14 +3,16 @@
 # install.packages("ggplot2", type = "binary")
 # install.packages("DHARMa", type = "binary")
 # install.packages("MASS", type = "binary")
+# install.packages("olsrr", type = "binary")
 library(car)
 library(ggplot2)
 library(DHARMa)
 library(MASS)
+library(olsrr)
 source("ishaan_functions.R")
 
 # --- Loading data ---
-df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\filtered_cardio.csv", sep = ";") 
+df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\ishaan_files\\filtered_cardio.csv", sep = ";")
 
 # GOAL 1: Identifying how to keep healthy systolic blood pressure
 # 90 ~ 120 mmHg for systolic (source: AHA)
@@ -57,10 +59,10 @@ summary_model_v3 <- summary(model_v3)
 # The adjusted R^2 is still very low, but without deviating from a linear model, this is about as good as we'll get.
 # Let's analyze residuals for any transformation that needs to be done on ap_hi.
 
-# Residual analysis
+# Residual analysis - red line indicates quantile deviation
 sim_res_model_v3 <- simulateResiduals(model_v3)
 plotQQunif(sim_res_model_v3)
-plotResiduals(sim_res_model_v3)
+plotResiduals(sim_res_model_v3, smoothScatter = FALSE)
 
 # Tests from QQunif:
 # KS test shows significance, i.e. the data can be said to be drawn from another distribution beyond a reasonable doubt --> interpreting QQ plot reveals that the data is heavy on both tails, so this is expected
@@ -72,7 +74,8 @@ boxcox(model_v3, plotit = TRUE)
 
 # Model v4 will use k = -2/3 from Box-Cox on top of v3
 k <- -2/3
-model_v4 <- glm(formula = (ap_hi^k - 1) / k ~ (1 + age_years + height_imperial + weight_imperial) * 
+df$ap_hi_modified <- (df$ap_hi ^ k - 1) / k
+model_v4 <- glm(formula = ap_hi_modified ~ (1 + age_years + height_imperial + weight_imperial) * 
                                 (1 + gender_dv) *
                                 (1 + smoke_dv) * 
                                 (1 + alco_dv) * 
@@ -83,7 +86,10 @@ model_v4 <- glm(formula = (ap_hi^k - 1) / k ~ (1 + age_years + height_imperial +
 # Determine how well the model does
 summary_model_v4 <- summary(model_v4)
 
-# Residual analysis
+# Residual analysis - red line indicates quantile deviation
 sim_res_model_v4 <- simulateResiduals(model_v4)
 plotQQunif(sim_res_model_v4)
-plotResiduals(sim_res_model_v4)
+plotResiduals(sim_res_model_v4, smoothScatter = FALSE)
+
+# Model v5 will use forward model selection from v4
+ols_step_forward_p(model_v4)
