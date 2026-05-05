@@ -1,9 +1,9 @@
 # --- Importing libraries and functions ---
-# install.packages("car", type = "binary")
-# install.packages("ggplot2", type = "binary")
-# install.packages("DHARMa", type = "binary")
-# install.packages("MASS", type = "binary")
-# install.packages("olsrr", type = "binary")
+install.packages("car", type = "binary")
+install.packages("ggplot2", type = "binary")
+install.packages("DHARMa", type = "binary")
+install.packages("MASS", type = "binary")
+install.packages("olsrr", type = "binary")
 library(car)
 library(ggplot2)
 library(DHARMa)
@@ -12,7 +12,7 @@ library(olsrr)
 source("ishaan_functions.R")
 
 # --- Loading data ---
-df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\ishaan_files\\filtered_cardio.csv", sep = ";")
+df <- read.csv("C:\\Users\\ixg220013\\Downloads\\filtered_cardio.csv", sep = ";")
 
 # GOAL 1: Identifying how to keep healthy systolic blood pressure
 # 90 ~ 120 mmHg for systolic (source: AHA)
@@ -30,12 +30,12 @@ summary_model_v1 <- summary(model_v1)
 
 # Model v2 will add cross terms that come about because of categorical variables
 model_v2 <- lm(formula = ap_hi ~ (1 + age_years + height_imperial + weight_imperial) * 
-                                (1 + gender_dv) *
-                                (1 + smoke_dv) * 
-                                (1 + alco_dv) * 
-                                (1 + active_dv) * 
-                                (1 + cholesterol_2_dv + cholesterol_3_dv) * 
-                                (1 + gluc_2_dv + gluc_3_dv), data = df)
+                 (1 + gender_dv) *
+                 (1 + smoke_dv) * 
+                 (1 + alco_dv) * 
+                 (1 + active_dv) * 
+                 (1 + cholesterol_2_dv + cholesterol_3_dv) * 
+                 (1 + gluc_2_dv + gluc_3_dv), data = df)
 
 # Determine how well the model does
 summary_model_v2 <- summary(model_v2)
@@ -45,12 +45,12 @@ summary_model_v2 <- summary(model_v2)
 
 # Model v3 will use a generalized version
 model_v3 <- glm(formula = ap_hi ~ (1 + age_years + height_imperial + weight_imperial) * 
-                                (1 + gender_dv) *
-                                (1 + smoke_dv) * 
-                                (1 + alco_dv) * 
-                                (1 + active_dv) * 
-                                (1 + cholesterol_2_dv + cholesterol_3_dv) * 
-                                (1 + gluc_2_dv + gluc_3_dv), data = df)
+                  (1 + gender_dv) *
+                  (1 + smoke_dv) * 
+                  (1 + alco_dv) * 
+                  (1 + active_dv) * 
+                  (1 + cholesterol_2_dv + cholesterol_3_dv) * 
+                  (1 + gluc_2_dv + gluc_3_dv), data = df)
 
 # Determine how well the model does
 summary_model_v3 <- summary(model_v3)
@@ -76,12 +76,12 @@ boxcox(model_v3, plotit = TRUE)
 k <- -2/3
 df$ap_hi_modified <- (df$ap_hi ^ k - 1) / k
 model_v4 <- glm(formula = ap_hi_modified ~ (1 + age_years + height_imperial + weight_imperial) * 
-                                (1 + gender_dv) *
-                                (1 + smoke_dv) * 
-                                (1 + alco_dv) * 
-                                (1 + active_dv) * 
-                                (1 + cholesterol_2_dv + cholesterol_3_dv) * 
-                                (1 + gluc_2_dv + gluc_3_dv), data = df)
+                  (1 + gender_dv) *
+                  (1 + smoke_dv) * 
+                  (1 + alco_dv) * 
+                  (1 + active_dv) * 
+                  (1 + cholesterol_2_dv + cholesterol_3_dv) * 
+                  (1 + gluc_2_dv + gluc_3_dv), data = df)
 
 # Determine how well the model does
 summary_model_v4 <- summary(model_v4)
@@ -96,17 +96,19 @@ plotResiduals(sim_res_model_v4, smoothScatter = FALSE)
 ols_step_forward_p(model_v4)
 
 # Model v6 will use forward selection from the base model
-current_model <- glm(ap_hi_modified ~ age_years + height_imperial + weight_imperial, data = df)
+k <- -2/3
+df$ap_hi_modified <- (df$ap_hi ^ k - 1) / k
+model_v6 <- glm(ap_hi_modified ~ age_years + height_imperial + weight_imperial, data = df)
 
 candidates <- c(
-  "gender_dv",
-  "smoke_dv",
-  "alco_dv",
-  "active_dv",
-  "cholesterol_2_dv",
-  "cholesterol_3_dv",
-  "gluc_2_dv",
-  "gluc_3_dv"
+    "gender_dv",
+    "smoke_dv",
+    "alco_dv",
+    "active_dv",
+    "cholesterol_2_dv",
+    "cholesterol_3_dv",
+    "gluc_2_dv",
+    "gluc_3_dv"
 )
 
 remaining <- candidates
@@ -114,34 +116,42 @@ selected <- c()
 alpha <- 0.05
 
 repeat {
-  if (length(remaining) == 0) break
-  
-  pvals <- c()
-  models <- list()
-  
-  for (term in remaining) {
+    if (length(remaining) == 0) break
     
-    # This line is the key: it adds (1 + term) in your original sense
-    model_try <- update(current_model, as.formula(paste("~ . *", term)))
+    pvals <- c()
+    models <- list()
+    for (term in remaining) {
+        model_try <- update(model_v6, as.formula(paste("~ . *", term)))
+        a <- anova(model_v6, model_try, test = "F")
+        pvals[term] <- a$`Pr(>F)`[2]
+        models[[term]] <- model_try
+    }
     
-    a <- anova(current_model, model_try, test = "F")
-    
-    pvals[term] <- a$`Pr(>F)`[2]
-    models[[term]] <- model_try
-  }
-  
-  best_term <- names(which.min(pvals))
-  best_p <- min(pvals, na.rm = TRUE)
-  
-  if (!is.na(best_p) && best_p < alpha) {
-    current_model <- models[[best_term]]
-    selected <- c(selected, best_term)
-    remaining <- setdiff(remaining, best_term)
-    
-    cat("Added block:", best_term, "| p =", best_p, "\n")
-  } else {
-    break
-  }
+    best_term <- names(which.min(pvals))
+    best_p <- min(pvals, na.rm = TRUE)
+    if (!is.na(best_p) && best_p < alpha) {
+        model_v6 <- models[[best_term]]
+        selected <- c(selected, best_term)
+        remaining <- setdiff(remaining, best_term)
+        cat("Added block:", best_term, "| p =", best_p, "\n")
+    } else {
+        break
+    }
 }
 
-summary(current_model)
+# Determine how well the model does
+summary_model_v6 <- summary(model_v6)
+
+# Model v7 will use a single filtering pass
+coefs <- summary(model_v6)$coefficients
+keep_terms <- rownames(coefs)[coefs[, "Pr(>|t|)"] < 0.05]
+keep_terms <- setdiff(keep_terms, "(Intercept)")
+current_terms <- attr(terms(model_v7), "term.labels")
+
+new_formula <- as.formula(
+    paste("ap_hi_modified ~", paste(keep_terms, collapse = " + "))
+)
+model_v7 <- lm(new_formula, data = df)
+
+# Determine how well the model does
+summary_model_v7 <- summary(model_v7)
