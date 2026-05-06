@@ -1,10 +1,11 @@
 #Install packages 
 
-#install.packages("ggplot2", type = "binary")
-#install.packages("DHARMa", type = "binary")
-#install.packages("MASS", type = "binary")
-#install.packages("olsrr", type = "binary")
-#install.packages("glmnet")
+ install.packages("ggplot2", type = "binary")
+ install.packages("DHARMa", type = "binary")
+ install.packages("MASS", type = "binary")
+ install.packages("olsrr", type = "binary")
+ install.packages("glmnet")
+ install.packages("pROC")
 
 
 
@@ -15,11 +16,12 @@ library(MASS)
 library(olsrr)
 library(glmnet)
 library(ggplot2)
+ library(pROC)
 #setwd("C:\\Users\\diego\\OneDrive\\Documents\\School\\Spring 26\\STAT4355")
 
 readLines("filtered_cardio.csv", n = 5)
 
-t <- read.csv2("filtered_cardio.csv")
+t <- read.csv2("C:\\Users\\dxe230000\\Desktop\\filtered_cardio.csv")
 #t <- read.csv2("cardio_train.csv")
 #t <- subset(t, ap_hi >= 30 & ap_hi <=370 & ap_lo >=6 & ap_lo <= 370)
 #t <- na.omit(t)
@@ -256,6 +258,7 @@ comparison
 
 
 ###-----------------------------
+#####------------------------------------------------
 ### Change response variable, include aphi and lo, family= binomial, 
 ## check box cox, select k at top of parabola
 
@@ -596,6 +599,14 @@ plotResiduals(sim_res_model_cm8_r, smoothScatter = FALSE)
 testDispersion(sim_res_model_cm8_r)
 testUniformity(sim_res_model_cm8_r)
 
+##Checked AUC to see how model differentiates between prescence of cardiovascular disease
+probs <- as.numeric(unlist(predict(cardiomodel8_reduced, type = "response")))
+actuals <- as.numeric(unlist(t$cardio))
+## Calculate AUC 
+roc_obj <- roc(actuals, probs)
+auc(roc_obj)
+
+plot(roc_obj, col= "lightblue", lwd=3, main = "ROc Curve for cm8_reduced")
 
 ####-------------------------------------------------------------------------------------------------  
 #Plots for presentation: 
@@ -651,8 +662,15 @@ ggplot(aic_table, aes(x = model, y = AIC)) +
 
 ## From the reduced model8 the most important interactions selected via LRT 
 #age_years:ap_hi
+
+
+
 #ap_hi:cholesterol_3_dv
+
+
 #weight_imperial:ap_hi
+
+
 #cholesterol_3_dv:gluc_3_dv
 
 
@@ -665,5 +683,4 @@ ggplot(aic_table, aes(x = model, y = AIC)) +
 #diagnostic plots 
 plotQQunif(sim_res_model_cm8_r)
 plotResiduals(sim_res_model_cm8_r, smoothScatter = FALSE)
-
 
