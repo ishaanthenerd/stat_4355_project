@@ -9,10 +9,10 @@ library(ggplot2)
 library(DHARMa)
 library(MASS)
 library(olsrr)
-source("ishaan_functions.R")
+source("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\ishaan_files\\ishaan_functions.R")
 
 # --- Loading data ---
-df <- read.csv("C:\\Users\\ixg220013\\Downloads\\filtered_cardio.csv", sep = ";")
+df <- read.csv("C:\\Users\\ishaa\\Downloads\\stat_4355_project\\ishaan_files\\filtered_cardio.csv", sep = ";")
 
 # GOAL 1: Identifying how to keep healthy systolic blood pressure
 # 90 ~ 120 mmHg for systolic (source: AHA)
@@ -142,6 +142,8 @@ repeat {
 # Determine how well the model does
 summary_model_v6 <- summary(model_v6)
 
+# Model 6's selections in order: cholesterol_3_dv, cholesterol_2_dv, gender_dv, gluc_3_dv, gluc_2_dv, alco_dv
+
 # Model v7 will use a single filtering pass
 coefs <- summary(model_v6)$coefficients
 keep_terms <- rownames(coefs)[coefs[, "Pr(>|t|)"] < 0.05]
@@ -155,3 +157,8 @@ model_v7 <- lm(new_formula, data = df)
 
 # Determine how well the model does
 summary_model_v7 <- summary(model_v7)
+
+# Residual analysis - red line indicates quantile deviation
+sim_res_model_v7 <- simulateResiduals(model_v7)
+plotQQunif(sim_res_model_v7)
+plotResiduals(sim_res_model_v7, smoothScatter = FALSE)
