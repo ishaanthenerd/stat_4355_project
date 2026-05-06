@@ -455,6 +455,8 @@ AIC(cardiomodel2, cardiomodel6c)
 ##Going to run lasso regression so model does not blowup 
 
 # Make sure response is 0/1 numeric
+class(t$cardio)
+table(t$cardio)
 y <- if (is.factor(t$cardio)) as.numeric(t$cardio) - 1 else t$cardio
 
 # Build predictor matrix:
@@ -468,6 +470,7 @@ x <- model.matrix(
        smoke + alco + active)^2,
   data = t
 )[, -1]   # remove intercept column
+dim(x)
 
 # Cross-validated lasso logistic regression
 set.seed(123)
@@ -475,31 +478,37 @@ cardiolasso_cv <- cv.glmnet(
   x, y,
   family = "binomial",
   alpha = 1,
+  #used 10 fold cross validation
   nfolds = 10,
   standardize = TRUE
 )
 
+
 # Plot CV curve
 plot(cardiolasso_cv)
 
-# Coefficients at the more conservative lambda
+# Coefficients at lambda.1se
 coef_1se <- coef(cardiolasso_cv, s = "lambda.1se")
+
+#extracting variables not needed/ that lasso shrunk to 0: Keeping non 0 
 selected_terms <- rownames(coef_1se)[as.vector(coef_1se !=0)]
+
 selected_terms <- setdiff(selected_terms, "(Intercept)")
 selected_terms
 
 
 interaction_terms <- selected_terms[grepl(":", selected_terms)]
 
+## Hierarchy Principle, want to include both interactions and variables inside interactions
 if (length(interaction_terms) > 0) {
-  maineffectsinterctions <- unique(unlist(strsplit(interaction_terms, ":")))
-  selected_terms <- unique(c(selected_terms, maineffectsinterctions))
+  main_effects_interactions <- unique(unlist(strsplit(interaction_terms, ":")))
+  selected_terms <- unique(c(selected_terms, main_effects_interactions))
 }
 
 selected_terms 
 
 
-## Model 8 Lasso regression
+## Model 8 Lasso regression selected terms get run as a regular logistic regression
 lasso_formula <- as.formula(
   paste("cardio ~", paste(selected_terms, collapse = " + "))
 )
@@ -586,3 +595,75 @@ plotResiduals(sim_res_model_cm8_r, smoothScatter = FALSE)
 
 testDispersion(sim_res_model_cm8_r)
 testUniformity(sim_res_model_cm8_r)
+
+
+####-------------------------------------------------------------------------------------------------  
+#Plots for presentation: 
+
+#cardiomodel2 plots easier to explain
+
+##Odds-ratio plot on cardiomodel2
+
+# Odds ratios and 95% CI
+or_table <- data.frame(
+  term = names(coef(cardiomodel2)),
+  OR = exp(coef(cardiomodel2)),
+  lower = exp(confint(cardiomodel2)[,1]),
+  upper = exp(confint(cardiomodel2)[,2])
+)
+
+# Remove intercept
+or_table <- subset(or_table, term != "(Intercept)")
+
+# Optional nicer labels
+or_table$term <- factor(
+  or_table$term,
+  levels = rev(or_table$term)
+)
+
+ggplot(or_table, aes(x = term, y = OR)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+  coord_flip() +
+  labs(
+    title = "Odds Ratios from Main-Effects Logistic Model",
+    x = "Predictor",
+    y = "Odds Ratio (95% CI)"
+  ) +
+  theme_minimal()
+
+#AIC comparison plot
+
+aic_table <- data.frame(
+  model = c("Main Effects Model", "Full Post-Lasso Model", "Reduced Post-Lasso Model"),
+  AIC = c(AIC(cardiomodel2), AIC(cardiomodel8), AIC(cardiomodel8_reduced))
+)
+
+ggplot(aic_table, aes(x = model, y = AIC)) +
+  geom_col() +
+  labs(
+    title = "AIC Comparison of Cardiovascular Disease Models",
+    x = "Model",
+    y = "AIC"
+  ) +
+  theme_minimal()
+
+## From the reduced model8 the most important interactions selected via LRT 
+#age_years:ap_hi
+#ap_hi:cholesterol_3_dv
+#weight_imperial:ap_hi
+#cholesterol_3_dv:gluc_3_dv
+
+
+
+
+
+
+
+
+#diagnostic plots 
+plotQQunif(sim_res_model_cm8_r)
+plotResiduals(sim_res_model_cm8_r, smoothScatter = FALSE)
+
+
