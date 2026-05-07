@@ -162,3 +162,27 @@ summary_model_v7 <- summary(model_v7)
 sim_res_model_v7 <- simulateResiduals(model_v7)
 plotQQunif(sim_res_model_v7)
 plotResiduals(sim_res_model_v7, smoothScatter = FALSE)
+
+# Model 7's selections:
+# Coefficients:
+#                                                                Estimate
+# (Intercept)                                                   1.430e+00  ***
+# age_years                                                     1.626e-04  ***
+# height_imperial                                              -9.570e-05  ***
+# weight_imperial                                               4.414e-05  ***
+# cholesterol_3_dv                                              8.636e-03  ***
+# gender_dv                                                     6.014e-03  ***
+# age_years:cholesterol_3_dv                                   -8.379e-05  ***
+# weight_imperial:cholesterol_3_dv                             -1.198e-05  ***
+# age_years:gender_dv                                          -5.155e-05  ***
+# height_imperial:gender_dv                                    -3.877e-05  **
+# cholesterol_3_dv:gender_dv                                   -2.084e-04  .
+# cholesterol_2_dv:gluc_3_dv                                    2.429e-03
+# age_years:gluc_2_dv                                           1.376e-05  ***
+# weight_imperial:cholesterol_3_dv:gluc_3_dv                   -3.713e-06  ***
+# age_years:cholesterol_2_dv:gluc_3_dv                         -1.931e-05
+# gender_dv:cholesterol_2_dv:alco_dv                            1.313e-03  ***
+# age_years:gender_dv:cholesterol_2_dv:gluc_3_dv               -1.010e-05
+# weight_imperial:gender_dv:gluc_3_dv:alco_dv                   1.506e-06
+# height_imperial:cholesterol_3_dv:gender_dv:gluc_2_dv:alco_dv -9.637e-05
+# weight_imperial:cholesterol_3_dv:gender_dv:gluc_2_dv:alco_dv  3.026e-05
